@@ -1,0 +1,136 @@
+# .github/workflows/umbrella.yml
+# INFRA-05: builds all related repos against this PR's llm-agent on every PR to main.
+name: umbrella
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: umbrella-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  cross-repo-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout llm-agent-contract (this PR)
+        uses: actions/checkout@v4
+        with:
+          path: llm-agent-contract
+
+      - name: Checkout llm-agent (main)
+        uses: actions/checkout@v4
+        with:
+          repository: costa92/llm-agent
+          path: llm-agent
+          ref: main
+
+      - name: Checkout llm-agent-providers (main)
+        uses: actions/checkout@v4
+        with:
+          repository: costa92/llm-agent-providers
+          path: llm-agent-providers
+          ref: main
+
+      - name: Checkout llm-agent-otel (main)
+        uses: actions/checkout@v4
+        with:
+          repository: costa92/llm-agent-otel
+          path: llm-agent-otel
+          ref: main
+
+      - name: Checkout llm-agent-customer-support (main)
+        uses: actions/checkout@v4
+        with:
+          repository: costa92/llm-agent-customer-support
+          path: llm-agent-customer-support
+          ref: main
+
+      - name: Checkout llm-agent-rag (master)
+        uses: actions/checkout@v4
+        with:
+          repository: costa92/llm-agent-rag
+          path: llm-agent-rag
+          ref: master
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: llm-agent-contract/go.mod
+          cache: false
+
+      - name: Verify scripts/workspace.sh is byte-identical across the 4 core checkouts (INFRA-03)
+        run: |
+          set -euo pipefail
+          # INFRA-03 applies to the 4 core repos that carry scripts/workspace.sh.
+          core_sha=$(sha256sum llm-agent/scripts/workspace.sh | awk '{print $1}')
+          echo "core scripts/workspace.sh sha256: $core_sha"
+          for repo in llm-agent-providers llm-agent-otel llm-agent-customer-support; do
+            sister_sha=$(sha256sum "$repo/scripts/workspace.sh" | awk '{print $1}')
+            if [ "$sister_sha" != "$core_sha" ]; then
+              echo "::error::$repo/scripts/workspace.sh sha256 ($sister_sha) does not match core ($core_sha)"
+              echo "Diff against core:"
+              diff -u "llm-agent/scripts/workspace.sh" "$repo/scripts/workspace.sh" || true
+              exit 1
+            fi
+            echo "$repo scripts/workspace.sh sha256 matches core: OK"
+          done
+
+      - name: Dependency-currency gate (ECO-04 / KE-6)
+        # Fails when any sister go.mod pins a sibling at a version older than
+        # that sibling's latest published release tag. Closes the test.yml vs
+        # umbrella.yml blind spot (RESEARCH 34, "The blind spot the gate closes").
+        # Single source of truth lives in scripts/dep-currency-check.sh — CI and
+        # local runs invoke the same script.
+        run: bash llm-agent/scripts/dep-currency-check.sh
+
+      - name: Initialize go.work pointing all 6 modules at this PR's llm-agent-contract
+        run: |
+          go work init ./llm-agent-contract ./llm-agent ./llm-agent-providers ./llm-agent-otel ./llm-agent-customer-support ./llm-agent-rag
+          # All related modules now resolve github.com/costa92/llm-agent-contract to ./llm-agent-contract
+          # (this PR's HEAD), regardless of the version pinned in their go.mod files.
+          go work sync || true
+
+      - name: Build llm-agent-contract (this PR)
+        run: |
+          cd llm-agent-contract
+          go vet ./...
+          go build ./...
+          go test ./... -count=1
+
+      - name: Build llm-agent
+        run: |
+          cd llm-agent
+          go vet ./...
+          go build ./...
+          go test ./... -count=1
+
+      - name: Build llm-agent-providers against this PR's llm-agent
+        run: |
+          cd llm-agent-providers
+          go vet ./...
+          go build ./...
+          go test ./...
+
+      - name: Build llm-agent-otel against this PR's llm-agent
+        run: |
+          cd llm-agent-otel
+          go vet ./...
+          go build ./...
+          go test ./...
+
+      - name: Build llm-agent-customer-support against this PR's llm-agent
+        run: |
+          cd llm-agent-customer-support
+          go vet ./...
+          go build ./...
+          go test ./...
+
+      - name: Build llm-agent-rag
+        run: |
+          cd llm-agent-rag
+          go vet ./...
+          go build ./...
+          go test ./...
