@@ -27,8 +27,21 @@ type Response struct {
 
 // Message is a single turn in a conversation.
 type Message struct {
-	Role    string `json:"role"`    // "user", "assistant", "tool", "system"
-	Content string `json:"content"`
+	Role    string         `json:"role"`             // "user", "assistant", "tool", "system"
+	Content string         `json:"content"`          // text content of the turn
+	Images  []MessageImage `json:"images,omitempty"` // images attached to a user turn for vision models; ignored by text-only models (Capabilities.Vision == false)
+}
+
+// MessageImage is one image attached to a user Message for vision
+// (image-understanding) models. Exactly one of URL or Bytes is set; the
+// provider chooses delivery (data URI vs hosted link). Providers whose
+// bound model lacks vision (Capabilities.Vision == false) ignore these,
+// so attaching images to a text-only model is a silent no-op, not an error.
+type MessageImage struct {
+	URL      string `json:"url,omitempty"`       // http(s) or data: URI; some providers (e.g. Moonshot/Kimi) accept only data: base64
+	Bytes    []byte `json:"bytes,omitempty"`     // raw image bytes; the provider encodes to a data: URI
+	MimeType string `json:"mime_type,omitempty"` // e.g. "image/png"; required alongside Bytes
+	Detail   string `json:"detail,omitempty"`    // vision detail hint "low"/"high"/"auto"; ignored if the provider does not support it
 }
 
 // Tool declares a function the model may call. Parameters is a raw

@@ -207,14 +207,14 @@ func TestProviderInfo_JSONRoundTrip(t *testing.T) {
 		Provider: "openai",
 		Model:    "gpt-4o-mini",
 		Capabilities: Capabilities{
-			Tools: true, Embeddings: true, StructuredOutputs: false, PromptCaching: false, ImageGeneration: true,
+			Tools: true, Embeddings: true, StructuredOutputs: false, PromptCaching: false, ImageGeneration: true, Vision: true,
 		},
 	}
 	b, err := json.Marshal(in)
 	if err != nil {
 		t.Fatalf("Marshal: %v", err)
 	}
-	want := `{"provider":"openai","model":"gpt-4o-mini","capabilities":{"tools":true,"embeddings":true,"structured_outputs":false,"prompt_caching":false,"image_generation":true}}`
+	want := `{"provider":"openai","model":"gpt-4o-mini","capabilities":{"tools":true,"embeddings":true,"structured_outputs":false,"prompt_caching":false,"image_generation":true,"vision":true}}`
 	if string(b) != want {
 		t.Errorf("Marshal:\n got  %s\n want %s", b, want)
 	}
