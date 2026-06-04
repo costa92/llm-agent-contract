@@ -27,4 +27,5 @@ type Capabilities struct {
 	Embeddings        bool `json:"embeddings"`          // Embed() returns vectors (NOT ErrCapabilityNotSupported)
 	StructuredOutputs bool `json:"structured_outputs"`  // WithSchema() applies a JSON schema constraint
 	PromptCaching     bool `json:"prompt_caching"`      // Anthropic explicit / OpenAI auto (consumed Phase 5+)
+	ImageGeneration   bool `json:"image_generation"`    // GenerateImage() returns images (NOT ErrCapabilityNotSupported)
 }
