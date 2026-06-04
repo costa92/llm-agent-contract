@@ -9,14 +9,16 @@
 //     (WithTools is immutable; returns a new value)
 //   - Embedder           capability: vector embeddings (does NOT embed
 //     ChatModel — orthogonal to chat)
+//   - ImageGenerator     capability: text-to-image generation (does NOT
+//     embed ChatModel — orthogonal to chat) (NEW in v0.3)
 //   - StructuredOutputs  capability: JSON-schema-constrained output
 //   - StreamReader       iterator-style streaming (Next + Close)
 //   - StreamEvent        typed union (TextDelta / ToolCall* / Done)
 //   - ProviderInfo       bound provider+model identity returned by Info()
 //   - Capabilities       per-(provider × model) feature struct
 //     (Tools / Embeddings / StructuredOutputs /
-//     PromptCaching as bool fields; JSON-serializable
-//     for OTel attribute emission)
+//     PromptCaching / ImageGeneration as bool fields;
+//     JSON-serializable for OTel attribute emission)
 //   - Tool / ToolCall    function-call schema + invocation
 //   - Message            single conversation turn
 //   - Request / Response chat-layer request/response (NEW in v0.3)
