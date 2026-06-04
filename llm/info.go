@@ -28,4 +28,5 @@ type Capabilities struct {
 	StructuredOutputs bool `json:"structured_outputs"`  // WithSchema() applies a JSON schema constraint
 	PromptCaching     bool `json:"prompt_caching"`      // Anthropic explicit / OpenAI auto (consumed Phase 5+)
 	ImageGeneration   bool `json:"image_generation"`    // GenerateImage() returns images (NOT ErrCapabilityNotSupported)
+	Vision            bool `json:"vision"`              // accepts image input in chat messages (Message.Images) for understanding
 }
