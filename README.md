@@ -13,7 +13,7 @@ module github.com/costa92/llm-agent-contract   (go 1.26, zero third-party requir
 
 ## What it owns
 
-A single package, `llm/`, holding the narrow set of types an Agent or Tool needs
+The core `llm/` package, holding the narrow set of types an Agent or Tool needs
 to call a model — nothing more:
 
 | Type | Role |
@@ -31,6 +31,14 @@ to call a model — nothing more:
 | `FinishReason` | OpenAI-compatible stop reasons |
 | error types | `ErrCapabilityNotSupported`, `ErrScriptExhausted` sentinels + typed `AuthError` / `RateLimitError` / `InvalidRequestError` / `TransientError` |
 | `ScriptedLLM` / `ChatOnlyMock` | deterministic full-capability mock + ChatModel-only mock for capability-degradation tests |
+
+Alongside `llm/`, sibling leaf packages share the same stdlib-only discipline:
+
+| Package | Role |
+| --- | --- |
+| `agents/` | the Agent / Tool interface surface |
+| `memory/` | the memory store contract |
+| `prompt/` | reusable prompt-template seam: `(Vars) → []llm.Message` (System + few-shot + history + user); `EngineBrace` (default, injection-safe `{var}`) or `EngineGoTemplate`; optional `Requester` lifts a system turn into `llm.Request` (**NEW in v0.5**) |
 
 ## Capability negotiation
 

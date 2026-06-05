@@ -12,7 +12,7 @@ module github.com/costa92/llm-agent-contract   (go 1.26, zero third-party requir
 
 ## 它拥有什么
 
-一个单独的包 `llm/`，仅持有 Agent 或 Tool 调用模型所需的那一小组类型——别无其他：
+核心 `llm/` 包，仅持有 Agent 或 Tool 调用模型所需的那一小组类型——别无其他：
 
 | 类型 | 角色 |
 | --- | --- |
@@ -29,6 +29,14 @@ module github.com/costa92/llm-agent-contract   (go 1.26, zero third-party requir
 | `FinishReason` | OpenAI 兼容的停止原因 |
 | error 类型 | `ErrCapabilityNotSupported`、`ErrScriptExhausted` 哨兵 + 类型化的 `AuthError` / `RateLimitError` / `InvalidRequestError` / `TransientError` |
 | `ScriptedLLM` / `ChatOnlyMock` | 确定性的全能力模拟（mock）+ 仅 ChatModel 的模拟，用于能力降级测试 |
+
+在 `llm/` 之外，同样遵循仅标准库纪律的兄弟叶子包：
+
+| 包 | 角色 |
+| --- | --- |
+| `agents/` | Agent / Tool 接口面 |
+| `memory/` | memory store 契约 |
+| `prompt/` | 可复用的提示词模板缝隙：`(Vars) → []llm.Message`（System + few-shot + history + user）；`EngineBrace`（默认，注入安全的 `{var}`）或 `EngineGoTemplate`；可选的 `Requester` 将 system 轮次提升进 `llm.Request`（**v0.5 新增**） |
 
 ## 能力协商
 

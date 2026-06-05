@@ -1,5 +1,10 @@
 package llm
 
+import (
+	"errors"
+	"io"
+)
+
 // StreamReader is the iterator-style interface for streaming responses.
 // Next returns io.EOF (from package "io") when the stream ends cleanly,
 // or ctx.Err() when the underlying context is cancelled. Close is
@@ -172,10 +177,11 @@ func AccumulateStream(sr StreamReader) (Response, error) {
 	}
 }
 
-// isEOF is a small indirection so stream.go does not import "io"
-// directly at this layer (the SR implementations import it). EOF
-// semantics are detected by the sentinel returned by Next, which is
-// always io.EOF when the stream ends cleanly.
+// isEOF reports whether err signals a clean stream end. Per the Next
+// contract the terminator is io.EOF, but a StreamReader may wrap it for
+// context (e.g. fmt.Errorf("provider closed: %w", io.EOF)); errors.Is
+// detects both the bare sentinel and any wrapped form. (A string compare
+// on err.Error()=="EOF" silently missed the wrapped case.)
 func isEOF(err error) bool {
-	return err != nil && err.Error() == "EOF"
+	return errors.Is(err, io.EOF)
 }
